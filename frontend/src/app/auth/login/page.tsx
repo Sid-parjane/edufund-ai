@@ -128,10 +128,6 @@ export default function LoginPage() {
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
 
-            <div className="bg-black/5 rounded-xl p-3 text-xs text-black/50">
-              <strong className="text-black/70">Demo Admin:</strong> admin@edufund.ai / Admin@1234
-            </div>
-
             <button type="submit" disabled={loading}
               className="w-full inline-flex items-center justify-center gap-3 bg-black text-white font-medium pl-6 pr-2 py-2.5 rounded-full hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 mt-2">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (

@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'EduFund AI — Smart Education Loans',
   description: 'Apply for education loans with AI-powered eligibility analysis. Fast, transparent, and student-first.',
   keywords: 'education loan, student loan, India, AI loan, fintech',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   openGraph: {
     title: 'EduFund AI — Smart Education Loans',
     description: 'Apply for education loans with AI-powered eligibility analysis.',
