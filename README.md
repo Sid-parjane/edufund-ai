@@ -6,7 +6,7 @@ I built this as part of the internship selection task. The goal was to create an
 **Backend API:** https://edufund-ai-production.up.railway.app/api/v1  
 **GitHub:** https://github.com/Sid-parjane/edufund-ai
 
----
+--- 
 
 ## What I Built
 
