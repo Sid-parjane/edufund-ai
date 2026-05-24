@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  DEAD_LEAD
+}
+
+enum LeadCategory {
+  HIGH_QUALITY
+  MEDIUM_QUALITY
+  LOW_QUALITY
+  UNSCORED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications LoanApplication[]
+
+  @@map("users")
+}
+
+model LoanApplication {
+  id             String            @id @default(cuid())
+  userId         String
+  status         ApplicationStatus @default(DRAFT)
+  leadScore      Int?
+  leadCategory   LeadCategory      @default(UNSCORED)
+  riskLevel      RiskLevel?
+  isEligible     Boolean?
+  deadLeadReason String?
+  loanAmount     Float?
+  notes          String?
+  submittedAt    DateTime?
+  reviewedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personalDetails PersonalDetails?
+  academicDetails AcademicDetails?
+  financialDetails FinancialDetails?
+  loanDetails     LoanDetails?
+  scoringLogs     ScoringLog[]
+  deadLeadLogs    DeadLeadLog[]
+
+  @@map("loan_applications")
+}
+
+model PersonalDetails {
+  id            String   @id @default(cuid())
+  applicationId String   @unique
+  fullName      String
+  dateOfBirth   DateTime
+  gender        String
+  email         String
+  phone         String
+  address       String
+  city          String
+  state         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("personal_details")
+}
+
+model AcademicDetails {
+  id                   String   @id @default(cuid())
+  applicationId        String   @unique
+  educationLevel       String
+  universityName       String
+  courseName           String
+  countryOfStudy       String
+  admissionStatus      String
+  expectedGradYear     Int
+  cgpaPercentage       Float
+  universityTier       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("academic_details")
+}
+
+model FinancialDetails {
+  id               String   @id @default(cuid())
+  applicationId    String   @unique
+  familyAnnualIncome Float
+  existingLoans    Int      @default(0)
+  existingLoanAmount Float?
+  coApplicantAvailable Boolean @default(false)
+  coApplicantIncome Float?
+  panNumber        String
+  aadhaarNumber    String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("financial_details")
+}
+
+model LoanDetails {
+  id              String   @id @default(cuid())
+  applicationId   String   @unique
+  requiredAmount  Float
+  tuitionFees     Float
+  livingExpenses  Float
+  scholarshipAmount Float  @default(0)
+  loanPurpose     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("loan_details")
+}
+
+model ScoringLog {
+  id            String   @id @default(cuid())
+  applicationId String
+  factor        String
+  points        Int
+  explanation   String
+  createdAt     DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("scoring_logs")
+}
+
+model DeadLeadLog {
+  id            String   @id @default(cuid())
+  applicationId String
+  reason        String
+  details       String?
+  createdAt     DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("dead_lead_logs")
+}
