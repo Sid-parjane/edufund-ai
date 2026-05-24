@@ -1,413 +1,236 @@
-# 🎓 EduFund AI — Education Loan Platform
+# EduFund AI — Education Loan Platform
 
-> A production-ready fintech SaaS platform for intelligent education loan applications with AI-powered lead scoring and dead lead detection.
+I built this as part of the internship selection task. The goal was to create an education loan application system with smart lead evaluation — but I wanted to go beyond a basic CRUD app and build something that actually feels like a real product.
 
-![Tech Stack](https://img.shields.io/badge/Next.js-14-black) ![NestJS](https://img.shields.io/badge/NestJS-10-red) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-blue) ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
-
----
-
-## 📋 Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Database Schema](#database-schema)
-- [API Documentation](#api-documentation)
-- [Local Setup](#local-setup)
-- [Deployment](#deployment)
-- [Environment Variables](#environment-variables)
-- [Screenshots](#screenshots)
+**Live Demo:** https://edufund-ai-app.vercel.app  
+**Backend API:** https://edufund-ai-production.up.railway.app/api/v1  
+**GitHub:** https://github.com/Sid-parjane/edufund-ai
 
 ---
 
-## Overview
+## What I Built
 
-EduFund AI is a production-grade education loan platform that uses an intelligent scoring engine to evaluate student profiles and determine loan eligibility. It features a modern multi-step application form, real-time AI scoring, dead lead detection, and a comprehensive admin dashboard.
-
-**Demo Credentials:**
-- **Admin:** `admin@edufund.ai` / `Admin@1234`
-- **Student:** `priya@example.com` / `Student@1234`
+A full-stack fintech platform where students can apply for education loans, get instant AI-powered eligibility scoring, and track their application status. On the backend, every submission runs through a scoring engine and a dead lead detector before a human ever sees it.
 
 ---
 
-## Features
+## The Problem I Was Solving
 
-### 🏠 Landing Page
-- Modern fintech design with blue/white gradient theme
-- Hero section with live AI score preview
-- How it works, features, eligibility, testimonials, FAQ sections
-- Fully responsive, mobile-first layout
-- Smooth Framer Motion animations
+Education loan applications are messy. Students don't know if they qualify until weeks later. Lenders waste time on fake or low-quality leads. I wanted to flip that — give students instant feedback on their profile, and give lenders pre-scored, pre-filtered leads.
 
-### 🔐 Authentication
-- JWT-based authentication with 7-day token expiry
-- bcrypt password hashing (12 salt rounds)
-- Strong password validation (uppercase + lowercase + number + special char)
-- Indian phone number validation
-- Disposable email detection
-- Duplicate account prevention
+---
 
-### 📝 Multi-Step Application Form (4 Steps)
-1. **Personal Info** — Name, DOB (age 18+ check), gender, contact, address
-2. **Academic Details** — University (auto tier detection), course, CGPA, admission status
-3. **Financial Details** — Family income, existing loans, co-applicant, PAN + Aadhaar validation
-4. **Loan Requirements** — Amount, tuition, living expenses, scholarship
+## How It Works
 
-Features:
-- Auto-save on step navigation
-- Resume draft application
-- Real-time eligibility tips (Framer Motion transitions)
-- Loan summary with loan-to-income ratio warning
-- Dynamic suggestions ("Add co-applicant to improve score by +10")
+**For Students:**
+1. Sign up and start a 4-step application
+2. Fill in personal, academic, financial, and loan details
+3. Submit — the AI scores your profile instantly (0–100)
+4. See your score, risk level, and a detailed breakdown on your dashboard
 
-### 🤖 AI Lead Scoring Engine
-Evaluates 8+ factors with explainable scoring:
+**For Admins:**
+1. Log in to the admin panel
+2. See all applications with filters by status and lead quality
+3. One-click approve or reject
+4. Analytics dashboard with charts showing lead distribution and trends
 
-| Factor | Points |
-|--------|--------|
-| CGPA > 85% | +20 |
-| CGPA 70–85% | +10 |
-| CGPA < 60% | -10 |
-| Tier-1 University | +20 |
-| Tier-2 University | +10 |
-| Family Income > ₹12L | +20 |
-| Family Income ₹6L–₹12L | +10 |
-| Family Income < ₹3L | -10 |
-| STEM/MBA Course | +10 |
-| Co-applicant Available | +10 |
-| 3+ Existing Loans | -15 |
-| Scholarship > 30% | +10 |
-| Confirmed Admission | +5 |
+---
 
-**Lead Categories:**
-- 🟢 High Quality: Score ≥ 75
-- 🟡 Medium Quality: Score 45–74
-- 🔴 Low Quality: Score < 45
+## The Scoring Engine
 
-### ⚠️ Dead Lead Detection
-Automatically flags invalid applications:
-- Disposable/fake email domains (mailinator, guerrillamail, etc.)
-- Sequential/pattern phone numbers (1234567890, 9999999999)
-- Keyboard mash in name/university fields
-- Fake test PAN numbers
-- Unrealistic income declarations
-- Loan-to-income ratio > 50x
-- Loan amount >> stated expenses
+This was the most interesting part to build. Rather than a black box, every score is explainable. Here's the logic I designed:
 
-### 📊 Student Dashboard
-- Application status tracking with visual progress
-- AI Score ring visualization
-- Score breakdown insights (factor-by-factor explanation)
-- Rejection reasons for dead leads
-- Resume draft applications
+| What I Check | Impact |
+|---|---|
+| CGPA above 85% | +20 points |
+| CGPA between 70–85% | +10 points |
+| CGPA below 60% | −10 points |
+| Tier-1 university (IIT, IIM, NIT, etc.) | +20 points |
+| Tier-2 university | +10 points |
+| Family income above ₹12L | +20 points |
+| Family income ₹6L–₹12L | +10 points |
+| Family income below ₹3L | −10 points |
+| STEM or MBA course | +10 points |
+| Co-applicant available | +10 points |
+| 3+ existing loans | −15 points |
+| Scholarship above 30% | +10 points |
+| Confirmed admission | +5 points |
 
-### 🛡️ Admin Dashboard
-- All applications with search + filter (status, lead category)
-- One-click Approve / Reject actions
-- Analytics: pie chart (lead distribution), bar chart (status breakdown)
-- User management table
-- Key metrics: total apps, high quality leads, dead leads, approval rate, avg score
+Score ≥ 75 → High Quality  
+Score 45–74 → Medium Quality  
+Score < 45 → Low Quality
+
+Every application also gets a Groq Llama 3.1 AI-generated risk summary — a 3–4 sentence analyst-style assessment that explains the strengths and concerns in plain English.
+
+---
+
+## Dead Lead Detection
+
+I built a separate detector that runs before scoring. It automatically flags and rejects applications with:
+
+- Disposable email domains (mailinator, guerrillamail, tempmail, etc.)
+- Fake phone patterns (1234567890, 9999999999, etc.)
+- Keyboard mash in name or university fields (qwerty, asdfgh, etc.)
+- Test PAN numbers
+- Unrealistic income (declaring ₹100 Crore+)
+- Loan amount that's 50x the family income
+- Loan amount way higher than stated tuition + expenses
+
+If flagged, the application is marked as Dead Lead with the specific reason stored.
 
 ---
 
 ## Tech Stack
 
-### Frontend
-| Technology | Purpose |
-|-----------|---------|
-| Next.js 14 (App Router) | React framework with SSR |
-| TypeScript | Type safety |
-| TailwindCSS | Utility-first styling |
-| Framer Motion | Animations |
-| Zustand | State management |
-| Axios | HTTP client |
-| Recharts | Charts |
-| Sonner | Toast notifications |
-
-### Backend
-| Technology | Purpose |
-|-----------|---------|
-| NestJS 10 | Node.js framework |
-| TypeScript | Type safety |
-| Prisma ORM | Database access |
-| PostgreSQL (Neon) | Database |
-| JWT + Passport | Authentication |
-| bcrypt | Password hashing |
-| Helmet | Security headers |
-| NestJS Throttler | Rate limiting |
-| class-validator | DTO validation |
+**Frontend:** Next.js 14, TypeScript, TailwindCSS, Framer Motion, Zustand, Recharts  
+**Backend:** NestJS, TypeScript, Prisma ORM  
+**Database:** PostgreSQL on Neon  
+**AI:** Groq API (Llama 3.1)  
+**Auth:** JWT + bcrypt  
+**Deployed:** Vercel (frontend) + Railway (backend) + Neon (database)
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT (Next.js)                        │
-│  Landing → Auth → Multi-Step Form → Dashboard → Admin Panel     │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ HTTPS (JWT Bearer Token)
-┌──────────────────────────▼──────────────────────────────────────┐
-│                      BACKEND (NestJS)                           │
-│                                                                 │
-│   ┌──────────┐  ┌──────────────┐  ┌──────────┐  ┌──────────┐   │
-│   │  /auth   │  │ /applications│  │ /scoring │  │  /admin  │   │
-│   └──────────┘  └──────────────┘  └──────────┘  └──────────┘   │
-│                                                                 │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │   Scoring Engine    │   Dead Lead Detector              │   │
-│   │   (8+ factors)      │   (email/phone/PAN/ratio)         │   │
-│   └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│   ┌────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
-│   │ JWT Guard  │  │ Admin Guard  │  │ Rate Limiter + Helmet  │  │
-│   └────────────┘  └──────────────┘  └────────────────────────┘  │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ Prisma ORM
-┌──────────────────────────▼──────────────────────────────────────┐
-│                 PostgreSQL (Neon)                                │
-│  users | loan_applications | personal_details | academic_details│
-│  financial_details | loan_details | scoring_logs | dead_lead_logs│
-└─────────────────────────────────────────────────────────────────┘
+Next.js Frontend (Vercel)
+        │
+        │ HTTPS + JWT
+        ▼
+NestJS Backend (Railway)
+  ├── /auth         → signup, login, JWT
+  ├── /applications → 4-step form CRUD + submit
+  ├── /scoring      → lead scoring + Groq AI
+  └── /admin        → analytics + management
+        │
+        │ Prisma ORM
+        ▼
+PostgreSQL on Neon
+  users, loan_applications, personal_details,
+  academic_details, financial_details, loan_details,
+  scoring_logs, dead_lead_logs
 ```
 
 ---
 
-## Database Schema
+## Database Design
 
-```prisma
-model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String   @unique
-  passwordHash String
-  role         Role     @default(STUDENT)
-  applications LoanApplication[]
-}
+I designed 8 tables with proper relations:
 
-model LoanApplication {
-  id           String            @id @default(cuid())
-  userId       String
-  status       ApplicationStatus @default(DRAFT)
-  leadScore    Int?
-  leadCategory LeadCategory      @default(UNSCORED)
-  riskLevel    RiskLevel?
-  isEligible   Boolean?
-  // ... relations to all detail tables
-}
-
-// + PersonalDetails, AcademicDetails, FinancialDetails,
-//   LoanDetails, ScoringLog, DeadLeadLog
-```
+- `users` — auth and role management
+- `loan_applications` — master record with status, score, category
+- `personal_details` — step 1 form data
+- `academic_details` — step 2, includes auto-detected university tier
+- `financial_details` — step 3, income and loan data
+- `loan_details` — step 4, amounts and purpose
+- `scoring_logs` — every scoring factor stored with explanation
+- `dead_lead_logs` — reason stored for every flagged application
 
 ---
 
-## API Documentation
+## API Design
 
-### Auth
 ```
-POST /api/v1/auth/signup      Create account
-POST /api/v1/auth/login       Login (returns JWT)
-GET  /api/v1/auth/me          Get current user [JWT]
-```
+POST   /api/v1/auth/signup
+POST   /api/v1/auth/login
+GET    /api/v1/auth/me
 
-### Applications
-```
-POST   /api/v1/applications              Create draft [JWT]
-GET    /api/v1/applications              Get user's apps [JWT]
-GET    /api/v1/applications/:id          Get app by ID [JWT]
-PATCH  /api/v1/applications/:id/personal Save personal details [JWT]
-PATCH  /api/v1/applications/:id/academic Save academic details [JWT]
-PATCH  /api/v1/applications/:id/financial Save financial details [JWT]
-PATCH  /api/v1/applications/:id/loan     Save loan details [JWT]
-POST   /api/v1/applications/:id/submit   Submit + score [JWT]
-PATCH  /api/v1/applications/:id/status   Update status [Admin]
-```
+POST   /api/v1/applications
+GET    /api/v1/applications
+GET    /api/v1/applications/:id
+PATCH  /api/v1/applications/:id/personal
+PATCH  /api/v1/applications/:id/academic
+PATCH  /api/v1/applications/:id/financial
+PATCH  /api/v1/applications/:id/loan
+POST   /api/v1/applications/:id/submit
 
-### Scoring
-```
-POST /api/v1/scoring/evaluate/:id   Re-evaluate application [Admin]
+GET    /api/v1/admin/applications
+GET    /api/v1/admin/analytics
+GET    /api/v1/admin/users
+PATCH  /api/v1/applications/:id/status
 ```
 
-### Admin
-```
-GET /api/v1/admin/applications     List all apps + filters [Admin]
-GET /api/v1/admin/analytics        Platform analytics [Admin]
-GET /api/v1/admin/users            All users [Admin]
-```
+All protected routes use JWT Bearer tokens. Admin routes have an additional role guard.
 
 ---
 
-## Local Setup
+## Running Locally
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL (or Neon account)
-- npm or yarn
+**Prerequisites:** Node.js 18+, a Neon PostgreSQL account, a Groq API key (free)
 
-### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/edufund-ai.git
+git clone https://github.com/Sid-parjane/edufund-ai.git
 cd edufund-ai
 ```
 
-### 2. Backend Setup
+**Backend:**
 ```bash
 cd backend
-
-# Install dependencies
-npm install
-
-# Set environment variables
 cp .env.example .env
-# Edit .env with your DATABASE_URL and JWT_SECRET
-
-# Generate Prisma client
-npm run prisma:generate
-
-# Push schema to database
+# Fill in DATABASE_URL, JWT_SECRET, GROQ_API_KEY
+npm install
 npm run prisma:push
-
-# Seed with sample data (creates admin + student)
 npm run prisma:seed
-
-# Start development server
 npm run start:dev
 ```
 
-### 3. Frontend Setup
+**Frontend:**
 ```bash
 cd frontend
-
-# Install dependencies
-npm install
-
-# Set environment variables
 cp .env.example .env.local
-# Edit .env.local with your backend URL
-
-# Start development server
+# Set NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+npm install
 npm run dev
 ```
 
-Backend runs at: `http://localhost:4000`  
-Frontend runs at: `http://localhost:3000`
-
----
-
-## Deployment
-
-### Backend → Railway or Render
-
-1. Push code to GitHub
-2. Create new project on [Railway](https://railway.app) or [Render](https://render.com)
-3. Connect your repository
-4. Set environment variables (see below)
-5. Railway will auto-detect Node.js and run `npm start:prod`
-6. The `Procfile` handles: `prisma migrate` → `start:prod`
-
-**Build Command:** `npm install && npm run build && npm run prisma:generate && npm run prisma:migrate`  
-**Start Command:** `npm run start:prod`
-
-### Frontend → Vercel
-
-1. Push code to GitHub
-2. Import project on [Vercel](https://vercel.com)
-3. Set `NEXT_PUBLIC_API_URL` to your Railway/Render backend URL
-4. Deploy (auto-detects Next.js)
-
-### Database → Neon PostgreSQL
-
-1. Create account at [neon.tech](https://neon.tech)
-2. Create new project → copy connection string
-3. Set as `DATABASE_URL` in backend `.env`
+**Test accounts (after seed):**
+- Admin: admin@edufund.ai / Admin@1234
+- Student: priya@example.com / Student@1234
 
 ---
 
 ## Environment Variables
 
-### Backend `.env`
-```env
-# Neon PostgreSQL connection string
-DATABASE_URL="postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/edufund?sslmode=require"
-
-# JWT secret (min 32 chars, use random string)
-JWT_SECRET="your-super-secret-jwt-key-minimum-32-characters"
-
-# Server port
+**backend/.env**
+```
+DATABASE_URL=postgresql://...neon.tech/neondb?sslmode=require
+JWT_SECRET=your-secret-min-32-chars
+GROQ_API_KEY=gsk_...
 PORT=4000
-
-# Node environment
 NODE_ENV=production
-
-# Frontend URL for CORS
-FRONTEND_URL="https://your-app.vercel.app"
+FRONTEND_URL=https://your-app.vercel.app
 ```
 
-### Frontend `.env.local`
-```env
+**frontend/.env.local**
+```
 NEXT_PUBLIC_API_URL=https://your-backend.railway.app/api/v1
 ```
 
 ---
 
-## Future Improvements
+## What I'd Add Next
 
-- [ ] OTP verification via SMS (Twilio/MSG91)
-- [ ] Email notifications (SendGrid/Resend)
-- [ ] Document upload (Aadhaar, PAN, admission letter) via S3
-- [ ] Credit score simulation
-- [ ] AI-generated risk summary (using Anthropic/OpenAI)
-- [ ] Chatbot assistant for eligibility queries
-- [ ] Audit logs for admin actions
-- [ ] Loan EMI calculator widget
-- [ ] Export applications to CSV/Excel
-- [ ] Push notifications
-- [ ] Mobile app (React Native)
+- OTP verification via SMS
+- Email notifications on status changes
+- Document upload (Aadhaar, PAN, admission letter)
+- EMI calculator
+- Audit logs for admin actions
+- Export leads to CSV
+- Mobile app
 
 ---
 
-## Project Structure
+## Decisions I Made
 
-```
-edufund-ai/
-├── frontend/                   # Next.js 14 App
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx        # Landing page
-│   │   │   ├── auth/           # Login & Signup
-│   │   │   ├── dashboard/      # Student dashboard
-│   │   │   ├── apply/          # Multi-step form
-│   │   │   └── admin/          # Admin panel
-│   │   ├── components/
-│   │   │   └── shared/         # AuthGuard, etc.
-│   │   ├── services/api.ts     # Axios API layer
-│   │   ├── store/auth.store.ts # Zustand auth state
-│   │   ├── types/index.ts      # TypeScript types
-│   │   └── lib/utils.ts        # Utility functions
-│   ├── package.json
-│   └── vercel.json
-│
-└── backend/                    # NestJS API
-    ├── src/
-    │   ├── main.ts             # Entry point
-    │   ├── app.module.ts       # Root module
-    │   ├── auth/               # JWT auth
-    │   ├── applications/       # Loan applications
-    │   ├── scoring/            # AI scoring engine + dead lead detector
-    │   ├── admin/              # Admin APIs
-    │   ├── prisma/             # Prisma service
-    │   └── common/             # Guards, decorators
-    ├── prisma/
-    │   ├── schema.prisma       # Database schema
-    │   └── seed.ts             # Sample data
-    ├── Procfile                # Deployment
-    └── package.json
-```
+**Why NestJS?** Structure and scalability. Decorators, guards, and modules make the codebase easy to extend without turning into spaghetti.
+
+**Why separate scoring and dead lead detection?** Dead leads should be rejected before scoring wastes compute. Two separate concerns, two separate classes.
+
+**Why Groq over OpenAI?** Free tier is generous, Llama 3.1 is fast, and for this use case (structured risk summaries) it performs just as well.
+
+**Why store scoring logs?** Explainability. Every score decision is traceable. You can see exactly which factors helped or hurt a lead.
 
 ---
 
-## License
-
-MIT © 2025 EduFund AI
+Built by Siddharth Parjane
